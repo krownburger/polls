@@ -216,6 +216,17 @@
           box.appendChild(lab);
         });
         wrap.appendChild(box);
+      } else if (col.type === "number") {
+        var sel = document.createElement("select");
+        sel.name = col.id;
+        for (var n = 0; n <= 20; n++) {
+          var opt = document.createElement("option");
+          opt.value = String(n);
+          opt.textContent = String(n);
+          if (String(val) === String(n)) opt.selected = true;
+          sel.appendChild(opt);
+        }
+        wrap.appendChild(sel);
       } else {
         var input = document.createElement("textarea");
         input.name = col.id;
@@ -233,6 +244,9 @@
       if (v === "ja") return '<span class="yes-txt">✓ Ja</span>';
       if (v === "nej") return '<span class="no-txt">✗ Nej</span>';
       return "–";
+    }
+    if (col.type === "number") {
+      return v === null || v === undefined || v === "" ? "–" : esc(String(v));
     }
     return esc(v || "–");
   }
@@ -319,6 +333,8 @@
         if (col.type === "checkbox") {
           var checked = e.target.querySelector('input[name="' + col.id + '"]:checked');
           answers[col.id] = checked ? checked.value : null;
+        } else if (col.type === "number") {
+          answers[col.id] = el.value === "" ? null : parseInt(el.value, 10);
         } else {
           answers[col.id] = el.value.trim();
         }

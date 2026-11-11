@@ -1,6 +1,6 @@
 # polls
 
-Poll-værktøj: opret en poll med navngivne kolonner (Ja/Nej ✓/✗ eller fritekst), del et link, og se alle svar samlet.
+Poll-værktøj: opret en poll med navngivne kolonner (Ja/Nej ✓/✗, antal via dropdown eller fritekst), del et link, og se alle svar samlet.
 
 ## Kør det
 
