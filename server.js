@@ -78,18 +78,36 @@ const server = http.createServer(async (req, res) => {
     const data = loadData();
     const m = pathname.match(/^\/api\/polls\/([A-Za-z0-9_-]+)(\/responses)?$/);
     try {
+      if (req.method === "GET" && pathname === "/api/polls") {
+        const list = Object.entries(data.polls).map(([id, p]) => ({
+          id,
+          title: p.title,
+          namePrompt: p.namePrompt,
+          createdAt: p.createdAt,
+          responseCount: p.responses.length
+        }));
+        list.sort((a, b) => b.createdAt - a.createdAt);
+        return sendJson(res, 200, { polls: list });
+      }
       if (req.method === "POST" && pathname === "/api/polls") {
         const body = await readBody(req);
         if (!isValidPoll(body)) return sendJson(res, 400, { error: "Ugyldig poll" });
         const id = crypto.randomUUID();
         data.polls[id] = {
           title: body.title.slice(0, 200),
+          namePrompt: typeof body.namePrompt === "string" && body.namePrompt.trim() ? body.namePrompt.trim().slice(0, 200) : "Skriv dit navn",
           columns: body.columns,
           createdAt: Date.now(),
           responses: []
         };
         saveData(data);
         return sendJson(res, 201, { id });
+      }
+      if (m && req.method === "DELETE" && !m[2]) {
+        if (!data.polls[m[1]]) return sendJson(res, 404, { error: "Poll ikke fundet" });
+        delete data.polls[m[1]];
+        saveData(data);
+        return sendJson(res, 200, { ok: true });
       }
       if (m) {
         const poll = data.polls[m[1]];
@@ -124,7 +142,7 @@ const server = http.createServer(async (req, res) => {
           return sendJson(res, 200, { ok: true, responses: poll.responses });
         }
         if (req.method === "GET" && !m[2]) {
-          return sendJson(res, 200, { poll: { title: poll.title, columns: poll.columns }, responses: poll.responses });
+          return sendJson(res, 200, { poll: { title: poll.title, namePrompt: poll.namePrompt, columns: poll.columns }, responses: poll.responses });
         }
       }
       return sendJson(res, 404, { error: "Not found" });
