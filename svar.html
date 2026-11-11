@@ -32,6 +32,8 @@
   th { background: #f0f4fa; }
   .yes-txt { color: #1a9e4b; font-weight: 700; }
   .no-txt { color: #c02626; font-weight: 700; }
+  .field.missing > label { color: #c02626; }
+  .field.missing .choice, .field.missing textarea, .field.missing select { border-color: #c02626; }
   .modal-overlay { position: fixed; inset: 0; background: rgba(15, 25, 40, 0.55); display: none; align-items: center; justify-content: center; z-index: 10; padding: 16px; }
   .modal-overlay.open { display: flex; }
   .modal { background: #fff; border-radius: 12px; padding: 24px; width: 100%; max-width: 460px; box-shadow: 0 10px 30px rgba(0,0,0,0.25); }
@@ -219,6 +221,11 @@
       } else if (col.type === "number") {
         var sel = document.createElement("select");
         sel.name = col.id;
+        var placeholder = document.createElement("option");
+        placeholder.value = "";
+        placeholder.textContent = "Vælg...";
+        if (val === null || val === undefined || val === "") placeholder.selected = true;
+        sel.appendChild(placeholder);
         for (var n = 0; n <= 20; n++) {
           var opt = document.createElement("option");
           opt.value = String(n);
@@ -327,18 +334,34 @@
       var name = getMyName();
       if (!name) { openNameModal(); return; }
       var answers = {};
+      var missing = [];
       poll.columns.forEach(function (col) {
         var el = e.target.elements[col.id];
         if (!el) return;
         if (col.type === "checkbox") {
           var checked = e.target.querySelector('input[name="' + col.id + '"]:checked');
           answers[col.id] = checked ? checked.value : null;
+          if (!checked) missing.push(col.name);
         } else if (col.type === "number") {
           answers[col.id] = el.value === "" ? null : parseInt(el.value, 10);
+          if (el.value === "") missing.push(col.name);
         } else {
           answers[col.id] = el.value.trim();
+          if (!answers[col.id]) missing.push(col.name);
         }
       });
+      e.target.querySelectorAll(".field.missing").forEach(function (f) { f.classList.remove("missing"); });
+      if (missing.length) {
+        poll.columns.forEach(function (col) {
+          var a = answers[col.id];
+          if (a === null || a === "") {
+            var el = e.target.querySelector('[name="' + col.id + '"]');
+            if (el && el.closest(".field")) el.closest(".field").classList.add("missing");
+          }
+        });
+        alert("Du mangler at svare på: " + missing.join(", "));
+        return;
+      }
       try {
         await store.submit(name, answers);
         renderForm();
