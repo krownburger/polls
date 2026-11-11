@@ -3,111 +3,72 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Poll-værktøj</title>
+<title>Opret poll</title>
 <style>
   * { box-sizing: border-box; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
   body { margin: 0; background: #f4f6f8; color: #1c2733; }
-  header { background: #2b5cff; color: #fff; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+  header { background: #2b5cff; color: #fff; padding: 16px 24px; }
   header h1 { font-size: 1.3rem; margin: 0; }
-  header h1 input { font-size: 1.1rem; padding: 4px 8px; border-radius: 6px; border: none; width: 260px; max-width: 60vw; }
-  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
-  button { cursor: pointer; border: none; border-radius: 6px; padding: 8px 14px; font-size: 0.95rem; background: #fff; color: #2b5cff; font-weight: 600; }
-  button:hover { background: #e8efff; }
-  button.primary { background: #2b5cff; color: #fff; }
-  button.primary:hover { background: #1e46cc; }
-  button.danger { background: #ffe3e3; color: #c02626; }
-  button.danger:hover { background: #ffc9c9; }
-  main { max-width: 960px; margin: 24px auto; padding: 0 16px; display: flex; flex-direction: column; gap: 24px; }
+  main { max-width: 860px; margin: 24px auto; padding: 0 16px; display: flex; flex-direction: column; gap: 24px; }
   section.card { background: #fff; border-radius: 10px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
   section.card h2 { margin-top: 0; font-size: 1.1rem; }
+  input[type="text"], select { padding: 8px 10px; border: 1px solid #c9d2dc; border-radius: 6px; font-size: 0.95rem; }
+  #titleInput { width: 100%; max-width: 480px; font-size: 1.05rem; }
   .add-col { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-  .add-col input, .add-col select { padding: 8px 10px; border: 1px solid #c9d2dc; border-radius: 6px; font-size: 0.95rem; }
   .add-col input { flex: 1; min-width: 160px; }
+  button { cursor: pointer; border: none; border-radius: 6px; padding: 8px 14px; font-size: 0.95rem; background: #2b5cff; color: #fff; font-weight: 600; }
+  button:hover { background: #1e46cc; }
+  button.secondary { background: #e8efff; color: #2b5cff; }
+  button.secondary:hover { background: #d4e0ff; }
+  button.danger { background: #ffe3e3; color: #c02626; }
+  button.danger:hover { background: #ffc9c9; }
   ul.col-list { list-style: none; padding: 0; margin: 16px 0 0; }
   ul.col-list li { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px; border: 1px solid #e2e8f0; border-radius: 6px; margin-bottom: 6px; }
   .badge { font-size: 0.75rem; background: #eef2ff; color: #2b5cff; border-radius: 999px; padding: 2px 10px; margin-left: 8px; }
-  .field { margin-bottom: 16px; }
-  .field label { display: block; font-weight: 600; margin-bottom: 6px; }
-  .field input[type="text"], .field textarea { width: 100%; padding: 8px 10px; border: 1px solid #c9d2dc; border-radius: 6px; font-size: 0.95rem; }
-  .check { display: flex; align-items: center; gap: 10px; font-size: 1rem; }
-  .check input { width: 20px; height: 20px; }
-  table { border-collapse: collapse; width: 100%; }
-  th, td { border: 1px solid #e2e8f0; padding: 8px 10px; text-align: left; font-size: 0.92rem; }
-  th { background: #f0f4fa; }
-  .modal-overlay { position: fixed; inset: 0; background: rgba(15, 25, 40, 0.55); display: none; align-items: center; justify-content: center; z-index: 10; padding: 16px; }
-  .modal-overlay.open { display: flex; }
-  .modal { background: #fff; border-radius: 12px; padding: 24px; width: 100%; max-width: 420px; box-shadow: 0 10px 30px rgba(0,0,0,0.25); }
-  .modal h2 { margin-top: 0; font-size: 1.15rem; }
-  .modal input[type="text"] { width: 100%; padding: 10px; border: 1px solid #c9d2dc; border-radius: 6px; font-size: 1rem; margin-bottom: 14px; }
-  .modal .modal-actions { display: flex; justify-content: flex-end; gap: 8px; }
-  .modal ul { list-style: none; padding: 0; margin: 0; max-height: 300px; overflow-y: auto; }
-  .modal ul li { padding: 8px 4px; border-bottom: 1px solid #eef2f6; display: flex; justify-content: space-between; gap: 8px; }
-  .modal ul li span.time { color: #6b7a8c; font-size: 0.85rem; white-space: nowrap; }
-  .who { font-size: 0.9rem; color: #2b5cff; font-weight: 600; }
+  .link-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 12px; }
+  .link-row input { flex: 1; min-width: 220px; background: #f0f4fa; }
   .empty { color: #6b7a8c; font-size: 0.92rem; }
 </style>
 </head>
 <body>
-<header>
-  <h1><input id="titleInput" type="text" placeholder="Pollens titel"></h1>
-  <div class="actions">
-    <button id="btnRespondents">Se hvem der har svaret</button>
-    <button id="btnReset" class="danger">Nulstil poll</button>
-  </div>
-</header>
+<header><h1>Opret en poll</h1></header>
 <main>
-  <section class="card" id="setupCard">
-    <h2>Tilføj kolonner</h2>
+  <section class="card">
+    <h2>1. Navngiv poll'en</h2>
+    <input id="titleInput" type="text" placeholder="F.eks. Fredagsmøde – hvem kommer?">
+  </section>
+
+  <section class="card">
+    <h2>2. Tilføj kolonner</h2>
     <div class="add-col">
-      <input id="colName" type="text" placeholder="Kolonnens navn f.eks. &quot;Kan du komme fredag?&quot;">
+      <input id="colName" type="text" placeholder="Kolonnens navn, f.eks. &quot;Kan du komme fredag?&quot;">
       <select id="colType">
         <option value="checkbox">Ja/Nej (afkrydsning)</option>
         <option value="text">Fritekst</option>
       </select>
-      <button id="btnAddCol" class="primary">Tilføj kolonne</button>
+      <button id="btnAddCol">Tilføj kolonne</button>
     </div>
     <ul class="col-list" id="colList"></ul>
   </section>
 
-  <section class="card" id="answerCard">
-    <h2>Dit svar <span class="who" id="whoAmI"></span></h2>
-    <form id="answerForm"></form>
-    <button id="btnSave" class="primary" type="submit" form="answerForm">Gem svar</button>
-  </section>
-
-  <section class="card" id="resultsCard">
-    <h2>Alle svar</h2>
-    <div id="resultsTable"></div>
+  <section class="card">
+    <h2>3. Generer det delbare link</h2>
+    <p class="empty">Linket indeholder hele poll'en. Send det til dem der skal svare – de kan kun svare, ikke ændre i undersøgelsen.</p>
+    <button id="btnGen">Generer link</button>
+    <div class="link-row" id="linkRow" hidden>
+      <input id="linkInput" type="text" readonly>
+      <button id="btnCopy" class="secondary">Kopier link</button>
+      <a id="previewLink" href="#" target="_blank" rel="noopener">Åbn forhåndsvisning</a>
+    </div>
+    <p class="empty" id="copyMsg" hidden>Link kopieret!</p>
   </section>
 </main>
 
-<div class="modal-overlay" id="nameModal">
-  <div class="modal">
-    <h2>Skriv dit navn</h2>
-    <p class="empty">Dit navn vises, så man kan se hvem der har svaret.</p>
-    <input id="nameInput" type="text" placeholder="F.eks. Anders Andersen" autocomplete="name">
-    <div class="modal-actions">
-      <button id="btnNameOk" class="primary">Fortsæt</button>
-    </div>
-  </div>
-</div>
-
-<div class="modal-overlay" id="respondentsModal">
-  <div class="modal">
-    <h2>Hvem har svaret?</h2>
-    <ul id="respondentsList"></ul>
-    <div class="modal-actions" style="margin-top:14px;">
-      <button id="btnCloseRespondents">Luk</button>
-    </div>
-  </div>
-</div>
-
 <script>
 (function () {
-  var STORAGE_KEY = "pollVaerktoejData_v1";
-  var NAME_KEY = "pollVaerktoejNavn_v1";
+  var STORAGE_KEY = "pollOpretter_v1";
 
-  var state = { title: "Min poll", columns: [], responses: [] };
+  var state = { title: "", columns: [] };
 
   function load() {
     try {
@@ -120,14 +81,6 @@
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   }
 
-  function getMyName() {
-    return sessionStorage.getItem(NAME_KEY) || "";
-  }
-
-  function setMyName(name) {
-    sessionStorage.setItem(NAME_KEY, name);
-  }
-
   function uid() {
     return "c" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
   }
@@ -136,6 +89,11 @@
     return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
     });
+  }
+
+  function encodePoll(poll) {
+    var b64 = btoa(unescape(encodeURIComponent(JSON.stringify(poll))));
+    return b64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
   }
 
   function renderColumns() {
@@ -154,7 +112,6 @@
       del.textContent = "Slet";
       del.addEventListener("click", function () {
         state.columns = state.columns.filter(function (c) { return c.id !== col.id; });
-        state.responses.forEach(function (r) { delete r.answers[col.id]; });
         save();
         renderAll();
       });
@@ -164,185 +121,59 @@
     });
   }
 
-  function myResponse() {
-    var name = getMyName();
-    return state.responses.find(function (r) { return r.name === name; }) || null;
-  }
-
-  function renderAnswerForm() {
-    var form = document.getElementById("answerForm");
-    var who = document.getElementById("whoAmI");
-    var name = getMyName();
-    who.textContent = name ? "(indsendt som " + name + ")" : "";
-    form.innerHTML = "";
-    if (!state.columns.length) {
-      form.innerHTML = '<p class="empty">Der er ikke tilføjet nogen kolonner endnu.</p>';
-      return;
-    }
-    var existing = myResponse();
-    state.columns.forEach(function (col) {
-      var wrap = document.createElement("div");
-      wrap.className = "field";
-      var label = document.createElement("label");
-      label.textContent = col.name;
-      wrap.appendChild(label);
-      var val = existing ? existing.answers[col.id] : undefined;
-      if (col.type === "checkbox") {
-        var check = document.createElement("label");
-        check.className = "check";
-        var input = document.createElement("input");
-        input.type = "checkbox";
-        input.name = col.id;
-        input.checked = val === true;
-        var txt = document.createElement("span");
-        txt.textContent = "Ja";
-        check.appendChild(input);
-        check.appendChild(txt);
-        wrap.appendChild(check);
-      } else {
-        var input = document.createElement("textarea");
-        input.name = col.id;
-        input.rows = 2;
-        input.placeholder = "Skriv dit svar her...";
-        input.value = val || "";
-        wrap.appendChild(input);
-      }
-      form.appendChild(wrap);
-    });
-  }
-
-  function renderResults() {
-    var box = document.getElementById("resultsTable");
-    if (!state.columns.length || !state.responses.length) {
-      box.innerHTML = '<p class="empty">Ingen svar endnu.</p>';
-      return;
-    }
-    var html = "<table><thead><tr><th>Navn</th>";
-    state.columns.forEach(function (col) { html += "<th>" + esc(col.name) + "</th>"; });
-    html += "<th>Tidspunkt</th></tr></thead><tbody>";
-    state.responses.forEach(function (r) {
-      html += "<tr><td>" + esc(r.name) + "</td>";
-      state.columns.forEach(function (col) {
-        var v = r.answers[col.id];
-        html += "<td>" + (col.type === "checkbox" ? (v === true ? "Ja" : "Nej") : esc(v || "–")) + "</td>";
-      });
-      html += "<td>" + esc(new Date(r.time).toLocaleString("da-DK")) + "</td></tr>";
-    });
-    box.innerHTML = html + "</tbody></table>";
-  }
-
-  function renderRespondents() {
-    var ul = document.getElementById("respondentsList");
-    ul.innerHTML = "";
-    if (!state.responses.length) {
-      ul.innerHTML = '<li class="empty">Ingen har svaret endnu.</li>';
-      return;
-    }
-    state.responses.forEach(function (r) {
-      var li = document.createElement("li");
-      var name = document.createElement("span");
-      name.textContent = r.name;
-      var time = document.createElement("span");
-      time.className = "time";
-      time.textContent = new Date(r.time).toLocaleString("da-DK");
-      li.appendChild(name);
-      li.appendChild(time);
-      ul.appendChild(li);
-    });
-  }
-
   function renderAll() {
     document.getElementById("titleInput").value = state.title;
     renderColumns();
-    renderAnswerForm();
-    renderResults();
   }
 
   document.getElementById("titleInput").addEventListener("input", function (e) {
-    state.title = e.target.value || "Min poll";
+    state.title = e.target.value;
     save();
   });
 
   document.getElementById("btnAddCol").addEventListener("click", function () {
     var nameEl = document.getElementById("colName");
-    var typeEl = document.getElementById("colType");
     var name = nameEl.value.trim();
     if (!name) { nameEl.focus(); return; }
-    state.columns.push({ id: uid(), name: name, type: typeEl.value });
+    state.columns.push({ id: uid(), name: name, type: document.getElementById("colType").value });
     nameEl.value = "";
     nameEl.focus();
     save();
     renderAll();
   });
 
-  document.getElementById("answerForm").addEventListener("submit", function (e) {
-    e.preventDefault();
-    var name = getMyName();
-    if (!name) { openNameModal(); return; }
-    var answers = {};
-    state.columns.forEach(function (col) {
-      var el = e.target.elements[col.id];
-      if (!el) return;
-      answers[col.id] = col.type === "checkbox" ? el.checked : el.value.trim();
-    });
-    var existing = myResponse();
-    if (existing) {
-      existing.answers = answers;
-      existing.time = Date.now();
-    } else {
-      state.responses.push({ id: uid(), name: name, time: Date.now(), answers: answers });
+  document.getElementById("btnGen").addEventListener("click", function () {
+    var poll = {
+      title: state.title.trim() || "Min poll",
+      columns: state.columns
+    };
+    if (!poll.columns.length) {
+      alert("Tilføj mindst én kolonne, før du genererer linket.");
+      return;
     }
-    save();
-    renderAll();
-    alert("Dit svar er gemt, " + name + "!");
+    var url = new URL("svar.html", location.href).href + "#p=" + encodePoll(poll);
+    document.getElementById("linkInput").value = url;
+    document.getElementById("previewLink").href = url;
+    document.getElementById("linkRow").hidden = false;
   });
 
-  document.getElementById("btnRespondents").addEventListener("click", function () {
-    renderRespondents();
-    document.getElementById("respondentsModal").classList.add("open");
-  });
-
-  document.getElementById("btnCloseRespondents").addEventListener("click", function () {
-    document.getElementById("respondentsModal").classList.remove("open");
-  });
-
-  document.getElementById("btnReset").addEventListener("click", function () {
-    if (!confirm("Nulstil hele poll'en? Alle kolonner og svar slettes.")) return;
-    state = { title: "Min poll", columns: [], responses: [] };
-    save();
-    renderAll();
-  });
-
-  function openNameModal() {
-    document.getElementById("nameInput").value = getMyName();
-    document.getElementById("nameModal").classList.add("open");
-    setTimeout(function () { document.getElementById("nameInput").focus(); }, 50);
-  }
-
-  function closeNameModal() {
-    document.getElementById("nameModal").classList.remove("open");
-  }
-
-  function submitName() {
-    var v = document.getElementById("nameInput").value.trim();
-    if (!v) { document.getElementById("nameInput").focus(); return; }
-    setMyName(v);
-    closeNameModal();
-    renderAll();
-  }
-
-  document.getElementById("btnNameOk").addEventListener("click", submitName);
-  document.getElementById("nameInput").addEventListener("keydown", function (e) {
-    if (e.key === "Enter") { e.preventDefault(); submitName(); }
-  });
-
-  document.getElementById("answerCard").addEventListener("click", function () {
-    if (!getMyName()) openNameModal();
+  document.getElementById("btnCopy").addEventListener("click", function () {
+    var input = document.getElementById("linkInput");
+    input.select();
+    var done = function () {
+      document.getElementById("copyMsg").hidden = false;
+      setTimeout(function () { document.getElementById("copyMsg").hidden = true; }, 2000);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(input.value).then(done, function () { document.execCommand("copy"); done(); });
+    } else {
+      document.execCommand("copy");
+      done();
+    }
   });
 
   load();
   renderAll();
-  if (!getMyName()) openNameModal();
 })();
 </script>
 </body>
