@@ -45,6 +45,7 @@
       <select id="colType">
         <option value="checkbox">Ja/Nej (✓ / ✗)</option>
         <option value="text">Fritekst</option>
+        <option value="number">Antal (dropdown med tal)</option>
       </select>
       <button id="btnAddCol">Tilføj kolonne</button>
     </div>
@@ -108,7 +109,8 @@
     state.columns.forEach(function (col) {
       var li = document.createElement("li");
       var label = document.createElement("span");
-      label.innerHTML = esc(col.name) + '<span class="badge">' + (col.type === "checkbox" ? "Ja/Nej ✓/✗" : "Fritekst") + "</span>";
+      var typeLabel = col.type === "checkbox" ? "Ja/Nej ✓/✗" : col.type === "number" ? "Antal" : "Fritekst";
+      label.innerHTML = esc(col.name) + '<span class="badge">' + typeLabel + "</span>";
       var del = document.createElement("button");
       del.className = "danger";
       del.textContent = "Slet";
