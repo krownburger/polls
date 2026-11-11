@@ -7,8 +7,10 @@
 <style>
   * { box-sizing: border-box; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
   body { margin: 0; background: #f4f6f8; color: #1c2733; }
-  header { background: #2b5cff; color: #fff; padding: 16px 24px; }
+  header { background: #2b5cff; color: #fff; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
   header h1 { font-size: 1.3rem; margin: 0; }
+  .navlink { color: #fff; font-weight: 600; background: rgba(255,255,255,0.15); padding: 8px 14px; border-radius: 6px; text-decoration: none; }
+  .navlink:hover { background: rgba(255,255,255,0.3); }
   main { max-width: 860px; margin: 24px auto; padding: 0 16px; display: flex; flex-direction: column; gap: 24px; }
   section.card { background: #fff; border-radius: 10px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
   section.card h2 { margin-top: 0; font-size: 1.1rem; }
@@ -34,11 +36,16 @@
 </style>
 </head>
 <body>
-<header><h1>Opret en poll</h1></header>
+<header>
+  <h1>Opret en poll</h1>
+  <a class="navlink" id="adminLink" href="admin.html">Alle polls (admin)</a>
+</header>
 <main>
   <section class="card">
     <h2>1. Navngiv poll'en</h2>
     <input id="titleInput" type="text" placeholder="F.eks. Fredagsmøde – hvem kommer?">
+    <h2 style="margin-top:16px;">Tekst i navn-popup på svar-siden</h2>
+    <input id="namePromptInput" type="text" placeholder="F.eks. Skriv dit barns navn">
   </section>
 
   <section class="card">
@@ -73,7 +80,7 @@
   var STORAGE_KEY = "pollOpretter_v1";
   var POLLID_KEY = "pollOpretterPollId_v1";
 
-  var state = { title: "", columns: [] };
+  var state = { title: "", namePrompt: "Skriv dit barns navn", columns: [] };
   var serverMode = location.protocol !== "file:";
 
   function load() {
@@ -159,6 +166,8 @@
 
   function renderAll() {
     document.getElementById("titleInput").value = state.title;
+    document.getElementById("namePromptInput").value = state.namePrompt;
+    if (!serverMode) document.getElementById("adminLink").style.display = "none";
     document.getElementById("modeNote").textContent = serverMode
       ? "Siden kører på serveren – alle der får linket kan svare, og alle kan se hinandens svar."
       : "Du har åbnet filen direkte (ikke via serveren) – linket bliver statisk, og svar gemmes kun i hver enkelt browser. Start serveren med: node server.js";
@@ -178,6 +187,11 @@
     save();
   });
 
+  document.getElementById("namePromptInput").addEventListener("input", function (e) {
+    state.namePrompt = e.target.value;
+    save();
+  });
+
   document.getElementById("btnAddCol").addEventListener("click", function () {
     var nameEl = document.getElementById("colName");
     var name = nameEl.value.trim();
@@ -192,6 +206,7 @@
   document.getElementById("btnGen").addEventListener("click", async function () {
     var poll = {
       title: state.title.trim() || "Min poll",
+      namePrompt: state.namePrompt.trim() || "Skriv dit navn",
       columns: state.columns
     };
     if (!poll.columns.length) {

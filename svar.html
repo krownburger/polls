@@ -56,7 +56,6 @@
 <main>
   <section class="card" id="answerCard">
     <h2>Dit svar <span class="who" id="whoAmI"></span></h2>
-    <p class="empty">Denne side er kun til at svare – selve undersøgelsen kan ikke ændres her.</p>
     <form id="answerForm"></form>
     <button id="btnSave" class="primary" type="submit" form="answerForm">Gem svar</button>
   </section>
@@ -69,7 +68,7 @@
 
 <div class="modal-overlay" id="nameModal">
   <div class="modal">
-    <h2>Skriv dit navn</h2>
+    <h2 id="namePromptTitle">Skriv dit navn</h2>
     <p class="empty">Dit navn vises, så alle kan se hvem der har svaret.</p>
     <input id="nameInput" type="text" placeholder="F.eks. Anders Andersen" autocomplete="name">
     <div class="modal-actions">
@@ -177,6 +176,7 @@
 
   function renderForm() {
     document.getElementById("pollTitle").textContent = poll.title || "Poll";
+    document.getElementById("namePromptTitle").textContent = poll.namePrompt || "Skriv dit navn";
     var who = document.getElementById("whoAmI");
     var name = getMyName();
     who.textContent = name ? "(du svarer som " + name + ")" : "";
