@@ -1,0 +1,5 @@
+.git
+data.json
+data/
+node_modules/
+*.md

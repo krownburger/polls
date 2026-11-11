@@ -13,3 +13,9 @@ På `index.html` kan du også sætte teksten i navn-popup'en (f.eks. "Skriv dit 
 Svar gemmes i `data.json` på serveren, så alle der åbner linket kan se hinandens svar.
 
 Hvis du åbner `index.html` direkte som fil (uden serveren), virker et statisk fallback-link hvor svar kun gemmes i den enkelte browser.
+
+## Host med Docker
+
+1. Sørg for at Docker og Docker Compose er installeret.
+2. Kør `docker compose up -d --build` i denne mappe.
+3. App'en kører på http://localhost:3000 – data (polls og svar) gemmes i `./data/data.json`, så de overlever genstarter af containeren.
