@@ -43,7 +43,7 @@
     <div class="add-col">
       <input id="colName" type="text" placeholder="Kolonnens navn, f.eks. &quot;Kan du komme fredag?&quot;">
       <select id="colType">
-        <option value="checkbox">Ja/Nej (afkrydsning)</option>
+        <option value="checkbox">Ja/Nej (✓ / ✗)</option>
         <option value="text">Fritekst</option>
       </select>
       <button id="btnAddCol">Tilføj kolonne</button>
@@ -52,13 +52,13 @@
   </section>
 
   <section class="card">
-    <h2>3. Generer det delbare link</h2>
-    <p class="empty">Linket indeholder hele poll'en. Send det til dem der skal svare – de kan kun svare, ikke ændre i undersøgelsen.</p>
-    <button id="btnGen">Generer link</button>
+    <h2>3. Gem poll'en og få det delbare link</h2>
+    <p class="empty" id="modeNote"></p>
+    <button id="btnGen">Gem poll og generer link</button>
     <div class="link-row" id="linkRow" hidden>
       <input id="linkInput" type="text" readonly>
       <button id="btnCopy" class="secondary">Kopier link</button>
-      <a id="previewLink" href="#" target="_blank" rel="noopener">Åbn forhåndsvisning</a>
+      <a id="previewLink" href="#" target="_blank" rel="noopener">Åbn poll</a>
     </div>
     <p class="empty" id="copyMsg" hidden>Link kopieret!</p>
   </section>
@@ -67,8 +67,10 @@
 <script>
 (function () {
   var STORAGE_KEY = "pollOpretter_v1";
+  var POLLID_KEY = "pollOpretterPollId_v1";
 
   var state = { title: "", columns: [] };
+  var serverMode = location.protocol !== "file:";
 
   function load() {
     try {
@@ -106,7 +108,7 @@
     state.columns.forEach(function (col) {
       var li = document.createElement("li");
       var label = document.createElement("span");
-      label.innerHTML = esc(col.name) + '<span class="badge">' + (col.type === "checkbox" ? "Ja/Nej" : "Fritekst") + "</span>";
+      label.innerHTML = esc(col.name) + '<span class="badge">' + (col.type === "checkbox" ? "Ja/Nej ✓/✗" : "Fritekst") + "</span>";
       var del = document.createElement("button");
       del.className = "danger";
       del.textContent = "Slet";
@@ -123,7 +125,18 @@
 
   function renderAll() {
     document.getElementById("titleInput").value = state.title;
+    document.getElementById("modeNote").textContent = serverMode
+      ? "Siden kører på serveren – alle der får linket kan svare, og alle kan se hinandens svar."
+      : "Du har åbnet filen direkte (ikke via serveren) – linket bliver statisk, og svar gemmes kun i hver enkelt browser. Start serveren med: node server.js";
     renderColumns();
+    var oldId = localStorage.getItem(POLLID_KEY);
+    if (oldId && serverMode) showLink(new URL("svar.html?id=" + oldId, location.href).href);
+  }
+
+  function showLink(url) {
+    document.getElementById("linkInput").value = url;
+    document.getElementById("previewLink").href = url;
+    document.getElementById("linkRow").hidden = false;
   }
 
   document.getElementById("titleInput").addEventListener("input", function (e) {
@@ -142,19 +155,33 @@
     renderAll();
   });
 
-  document.getElementById("btnGen").addEventListener("click", function () {
+  document.getElementById("btnGen").addEventListener("click", async function () {
     var poll = {
       title: state.title.trim() || "Min poll",
       columns: state.columns
     };
     if (!poll.columns.length) {
-      alert("Tilføj mindst én kolonne, før du genererer linket.");
+      alert("Tilføj mindst én kolonne, før du gemmer poll'en.");
       return;
     }
-    var url = new URL("svar.html", location.href).href + "#p=" + encodePoll(poll);
-    document.getElementById("linkInput").value = url;
-    document.getElementById("previewLink").href = url;
-    document.getElementById("linkRow").hidden = false;
+    if (serverMode) {
+      try {
+        var r = await fetch("/api/polls", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(poll)
+        });
+        if (!r.ok) throw new Error("server");
+        var j = await r.json();
+        localStorage.setItem(POLLID_KEY, j.id);
+        showLink(new URL("svar.html?id=" + j.id, location.href).href);
+        return;
+      } catch (e) {
+        alert("Kunne ikke kontakte serveren. Kører du siden via node server.js?");
+        return;
+      }
+    }
+    showLink(new URL("svar.html", location.href).href + "#p=" + encodePoll(poll));
   });
 
   document.getElementById("btnCopy").addEventListener("click", function () {
