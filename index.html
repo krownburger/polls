@@ -22,6 +22,9 @@
   button.secondary:hover { background: #d4e0ff; }
   button.danger { background: #ffe3e3; color: #c02626; }
   button.danger:hover { background: #ffc9c9; }
+  button.move { background: #eef2f6; color: #1c2733; padding: 6px 10px; font-size: 0.85rem; }
+  button.move:hover { background: #dde5ee; }
+  .col-actions { display: flex; gap: 6px; }
   ul.col-list { list-style: none; padding: 0; margin: 16px 0 0; }
   ul.col-list li { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px; border: 1px solid #e2e8f0; border-radius: 6px; margin-bottom: 6px; }
   .badge { font-size: 0.75rem; background: #eef2ff; color: #2b5cff; border-radius: 999px; padding: 2px 10px; margin-left: 8px; }
@@ -106,11 +109,37 @@
       list.innerHTML = '<li class="empty">Ingen kolonner endnu – tilføj den første ovenfor.</li>';
       return;
     }
-    state.columns.forEach(function (col) {
+    state.columns.forEach(function (col, idx) {
       var li = document.createElement("li");
       var label = document.createElement("span");
       var typeLabel = col.type === "checkbox" ? "Ja/Nej ✓/✗" : col.type === "number" ? "Antal" : "Fritekst";
       label.innerHTML = esc(col.name) + '<span class="badge">' + typeLabel + "</span>";
+      var actions = document.createElement("div");
+      actions.className = "col-actions";
+      var up = document.createElement("button");
+      up.className = "move";
+      up.textContent = "↑ Op";
+      up.disabled = idx === 0;
+      up.addEventListener("click", function () {
+        if (idx === 0) return;
+        var tmp = state.columns[idx - 1];
+        state.columns[idx - 1] = state.columns[idx];
+        state.columns[idx] = tmp;
+        save();
+        renderAll();
+      });
+      var down = document.createElement("button");
+      down.className = "move";
+      down.textContent = "↓ Ned";
+      down.disabled = idx === state.columns.length - 1;
+      down.addEventListener("click", function () {
+        if (idx === state.columns.length - 1) return;
+        var tmp = state.columns[idx + 1];
+        state.columns[idx + 1] = state.columns[idx];
+        state.columns[idx] = tmp;
+        save();
+        renderAll();
+      });
       var del = document.createElement("button");
       del.className = "danger";
       del.textContent = "Slet";
@@ -119,8 +148,11 @@
         save();
         renderAll();
       });
+      actions.appendChild(up);
+      actions.appendChild(down);
+      actions.appendChild(del);
       li.appendChild(label);
-      li.appendChild(del);
+      li.appendChild(actions);
       list.appendChild(li);
     });
   }
