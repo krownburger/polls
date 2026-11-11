@@ -14,17 +14,27 @@
   button:hover { background: #e8efff; }
   button.primary { background: #2b5cff; color: #fff; }
   button.primary:hover { background: #1e46cc; }
-  main { max-width: 720px; margin: 24px auto; padding: 0 16px; }
+  main { max-width: 860px; margin: 24px auto; padding: 0 16px; display: flex; flex-direction: column; gap: 24px; }
   section.card { background: #fff; border-radius: 10px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
   section.card h2 { margin-top: 0; font-size: 1.1rem; }
   .field { margin-bottom: 16px; }
-  .field label { display: block; font-weight: 600; margin-bottom: 6px; }
+  .field > label { display: block; font-weight: 600; margin-bottom: 6px; }
   .field textarea { width: 100%; padding: 8px 10px; border: 1px solid #c9d2dc; border-radius: 6px; font-size: 0.95rem; }
-  .check { display: flex; align-items: center; gap: 10px; font-size: 1rem; }
-  .check input { width: 20px; height: 20px; }
+  .choices { display: flex; gap: 10px; flex-wrap: wrap; }
+  .choice { display: flex; align-items: center; gap: 7px; border: 1px solid #c9d2dc; border-radius: 8px; padding: 8px 16px; cursor: pointer; font-weight: 600; user-select: none; }
+  .choice:hover { border-color: #2b5cff; }
+  .choice input { accent-color: #2b5cff; width: 17px; height: 17px; margin: 0; }
+  .mark { font-size: 1.1rem; font-weight: 700; }
+  .mark.yes { color: #1a9e4b; }
+  .mark.no { color: #c02626; }
+  table { border-collapse: collapse; width: 100%; }
+  th, td { border: 1px solid #e2e8f0; padding: 8px 10px; text-align: left; font-size: 0.92rem; }
+  th { background: #f0f4fa; }
+  .yes-txt { color: #1a9e4b; font-weight: 700; }
+  .no-txt { color: #c02626; font-weight: 700; }
   .modal-overlay { position: fixed; inset: 0; background: rgba(15, 25, 40, 0.55); display: none; align-items: center; justify-content: center; z-index: 10; padding: 16px; }
   .modal-overlay.open { display: flex; }
-  .modal { background: #fff; border-radius: 12px; padding: 24px; width: 100%; max-width: 420px; box-shadow: 0 10px 30px rgba(0,0,0,0.25); }
+  .modal { background: #fff; border-radius: 12px; padding: 24px; width: 100%; max-width: 460px; box-shadow: 0 10px 30px rgba(0,0,0,0.25); }
   .modal h2 { margin-top: 0; font-size: 1.15rem; }
   .modal input[type="text"] { width: 100%; padding: 10px; border: 1px solid #c9d2dc; border-radius: 6px; font-size: 1rem; margin-bottom: 14px; }
   .modal .modal-actions { display: flex; justify-content: flex-end; gap: 8px; }
@@ -50,12 +60,17 @@
     <form id="answerForm"></form>
     <button id="btnSave" class="primary" type="submit" form="answerForm">Gem svar</button>
   </section>
+
+  <section class="card" id="resultsCard">
+    <h2>Alle svar <span class="empty">(opdateres automatisk)</span></h2>
+    <div id="resultsTable"></div>
+  </section>
 </main>
 
 <div class="modal-overlay" id="nameModal">
   <div class="modal">
     <h2>Skriv dit navn</h2>
-    <p class="empty">Dit navn vises, så man kan se hvem der har svaret.</p>
+    <p class="empty">Dit navn vises, så alle kan se hvem der har svaret.</p>
     <input id="nameInput" type="text" placeholder="F.eks. Anders Andersen" autocomplete="name">
     <div class="modal-actions">
       <button id="btnNameOk" class="primary">Fortsæt</button>
@@ -78,39 +93,8 @@
   var NAME_KEY = "pollVaerktoejNavn_v1";
 
   var poll = null;
-  var pollKey = null;
   var responses = [];
-
-  function decodePoll(str) {
-    var b64 = str.replace(/-/g, "+").replace(/_/g, "/");
-    while (b64.length % 4) b64 += "=";
-    return JSON.parse(decodeURIComponent(escape(atob(b64))));
-  }
-
-  function loadPoll() {
-    var m = location.hash.match(/^#p=(.+)$/);
-    if (!m) return false;
-    try {
-      var p = decodePoll(m[1]);
-      if (!p || !Array.isArray(p.columns)) return false;
-      poll = p;
-      pollKey = "pollSvar_" + m[1].slice(0, 64);
-      return true;
-    } catch (e) {
-      return false;
-    }
-  }
-
-  function loadResponses() {
-    try {
-      var raw = localStorage.getItem(pollKey);
-      if (raw) responses = JSON.parse(raw);
-    } catch (e) { responses = []; }
-  }
-
-  function saveResponses() {
-    localStorage.setItem(pollKey, JSON.stringify(responses));
-  }
+  var store = null;
 
   function getMyName() {
     return sessionStorage.getItem(NAME_KEY) || "";
@@ -124,6 +108,66 @@
     return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
     });
+  }
+
+  function decodePoll(str) {
+    var b64 = str.replace(/-/g, "+").replace(/_/g, "/");
+    while (b64.length % 4) b64 += "=";
+    return JSON.parse(decodeURIComponent(escape(atob(b64))));
+  }
+
+  function makeServerStore(id) {
+    return {
+      type: "server",
+      async load() {
+        var r = await fetch("/api/polls/" + encodeURIComponent(id));
+        if (!r.ok) throw new Error("not found");
+        var j = await r.json();
+        poll = j.poll;
+        responses = j.responses || [];
+      },
+      async submit(name, answers) {
+        var r = await fetch("/api/polls/" + encodeURIComponent(id) + "/responses", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: name, answers: answers })
+        });
+        if (!r.ok) throw new Error("save failed");
+        responses = (await r.json()).responses;
+      },
+      async refresh() {
+        var r = await fetch("/api/polls/" + encodeURIComponent(id));
+        if (!r.ok) return;
+        responses = (await r.json()).responses || [];
+      }
+    };
+  }
+
+  function makeStaticStore(hash) {
+    var key = "pollSvar_" + hash.slice(0, 64);
+    return {
+      type: "static",
+      async load() {
+        var m = location.hash.match(/^#p=(.+)$/);
+        poll = decodePoll(m[1]);
+        try {
+          responses = JSON.parse(localStorage.getItem(key)) || [];
+        } catch (e) {
+          responses = [];
+        }
+      },
+      async submit(name, answers) {
+        var existing = responses.find(function (r) { return r.name === name; });
+        if (existing) {
+          existing.answers = answers;
+          existing.time = Date.now();
+        } else {
+          responses.push({ name: name, time: Date.now(), answers: answers });
+        }
+        localStorage.setItem(key, JSON.stringify(responses));
+      },
+      async refresh() { /* lokal tilstand ændres ikke udefra */ }
+    };
   }
 
   function myResponse() {
@@ -151,17 +195,27 @@
       wrap.appendChild(label);
       var val = existing ? existing.answers[col.id] : undefined;
       if (col.type === "checkbox") {
-        var check = document.createElement("label");
-        check.className = "check";
-        var input = document.createElement("input");
-        input.type = "checkbox";
-        input.name = col.id;
-        input.checked = val === true;
-        var txt = document.createElement("span");
-        txt.textContent = "Ja";
-        check.appendChild(input);
-        check.appendChild(txt);
-        wrap.appendChild(check);
+        var box = document.createElement("div");
+        box.className = "choices";
+        [["ja", "✓", "Ja", "yes"], ["nej", "✗", "Nej", "no"]].forEach(function (opt) {
+          var lab = document.createElement("label");
+          lab.className = "choice";
+          var inp = document.createElement("input");
+          inp.type = "radio";
+          inp.name = col.id;
+          inp.value = opt[0];
+          if (val === opt[0]) inp.checked = true;
+          var mark = document.createElement("span");
+          mark.className = "mark " + opt[3];
+          mark.textContent = opt[1];
+          var txt = document.createElement("span");
+          txt.textContent = opt[2];
+          lab.appendChild(inp);
+          lab.appendChild(mark);
+          lab.appendChild(txt);
+          box.appendChild(lab);
+        });
+        wrap.appendChild(box);
       } else {
         var input = document.createElement("textarea");
         input.name = col.id;
@@ -172,6 +226,34 @@
       }
       form.appendChild(wrap);
     });
+  }
+
+  function cellText(col, v) {
+    if (col.type === "checkbox") {
+      if (v === "ja") return '<span class="yes-txt">✓ Ja</span>';
+      if (v === "nej") return '<span class="no-txt">✗ Nej</span>';
+      return "–";
+    }
+    return esc(v || "–");
+  }
+
+  function renderResults() {
+    var box = document.getElementById("resultsTable");
+    if (!poll.columns.length || !responses.length) {
+      box.innerHTML = '<p class="empty">Ingen har svaret endnu.</p>';
+      return;
+    }
+    var html = "<table><thead><tr><th>Navn</th>";
+    poll.columns.forEach(function (col) { html += "<th>" + esc(col.name) + "</th>"; });
+    html += "<th>Tidspunkt</th></tr></thead><tbody>";
+    responses.forEach(function (r) {
+      html += "<tr><td>" + esc(r.name) + "</td>";
+      poll.columns.forEach(function (col) {
+        html += "<td>" + cellText(col, r.answers[col.id]) + "</td>";
+      });
+      html += "<td>" + esc(new Date(r.time).toLocaleString("da-DK")) + "</td></tr>";
+    });
+    box.innerHTML = html + "</tbody></table>";
   }
 
   function renderRespondents() {
@@ -208,59 +290,87 @@
     renderForm();
   }
 
-  if (!loadPoll()) {
+  async function init() {
+    var id = new URLSearchParams(location.search).get("id");
+    if (id) {
+      store = makeServerStore(id);
+    } else {
+      var m = location.hash.match(/^#p=(.+)$/);
+      if (!m) return fail();
+      store = makeStaticStore(m[1]);
+    }
+    try {
+      await store.load();
+    } catch (e) {
+      return fail();
+    }
+    renderForm();
+    renderResults();
+    if (!getMyName()) openNameModal();
+
+    document.getElementById("answerForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
+      var name = getMyName();
+      if (!name) { openNameModal(); return; }
+      var answers = {};
+      poll.columns.forEach(function (col) {
+        var el = e.target.elements[col.id];
+        if (!el) return;
+        if (col.type === "checkbox") {
+          var checked = e.target.querySelector('input[name="' + col.id + '"]:checked');
+          answers[col.id] = checked ? checked.value : null;
+        } else {
+          answers[col.id] = el.value.trim();
+        }
+      });
+      try {
+        await store.submit(name, answers);
+        renderForm();
+        renderResults();
+        alert("Dit svar er gemt, " + name + "!");
+      } catch (err) {
+        alert("Kunne ikke gemme svaret – prøv igen.");
+      }
+    });
+
+    document.getElementById("btnRespondents").addEventListener("click", function () {
+      renderRespondents();
+      document.getElementById("respondentsModal").classList.add("open");
+    });
+
+    document.getElementById("btnCloseRespondents").addEventListener("click", function () {
+      document.getElementById("respondentsModal").classList.remove("open");
+    });
+
+    document.getElementById("btnNameOk").addEventListener("click", submitName);
+    document.getElementById("nameInput").addEventListener("keydown", function (e) {
+      if (e.key === "Enter") { e.preventDefault(); submitName(); }
+    });
+
+    document.getElementById("answerCard").addEventListener("click", function () {
+      if (!getMyName()) openNameModal();
+    });
+
+    if (store.type === "server") {
+      setInterval(async function () {
+        try {
+          await store.refresh();
+          renderResults();
+          if (document.getElementById("respondentsModal").classList.contains("open")) renderRespondents();
+        } catch (e) { /* ignorer netværksfejl */ }
+      }, 5000);
+    }
+  }
+
+  function fail() {
     document.querySelector("main").innerHTML =
       '<section class="card error-card"><h2>Ugyldigt link</h2>' +
       '<p class="empty">Dette link lader ikke til at indeholde en poll.</p>' +
       '<p><a href="index.html">Gå tilbage til oprettelsessiden</a></p></section>';
     document.getElementById("btnRespondents").style.display = "none";
-    return;
   }
 
-  loadResponses();
-  renderForm();
-
-  document.getElementById("answerForm").addEventListener("submit", function (e) {
-    e.preventDefault();
-    var name = getMyName();
-    if (!name) { openNameModal(); return; }
-    var answers = {};
-    poll.columns.forEach(function (col) {
-      var el = e.target.elements[col.id];
-      if (!el) return;
-      answers[col.id] = col.type === "checkbox" ? el.checked : el.value.trim();
-    });
-    var existing = myResponse();
-    if (existing) {
-      existing.answers = answers;
-      existing.time = Date.now();
-    } else {
-      responses.push({ name: name, time: Date.now(), answers: answers });
-    }
-    saveResponses();
-    renderForm();
-    alert("Dit svar er gemt, " + name + "!");
-  });
-
-  document.getElementById("btnRespondents").addEventListener("click", function () {
-    renderRespondents();
-    document.getElementById("respondentsModal").classList.add("open");
-  });
-
-  document.getElementById("btnCloseRespondents").addEventListener("click", function () {
-    document.getElementById("respondentsModal").classList.remove("open");
-  });
-
-  document.getElementById("btnNameOk").addEventListener("click", submitName);
-  document.getElementById("nameInput").addEventListener("keydown", function (e) {
-    if (e.key === "Enter") { e.preventDefault(); submitName(); }
-  });
-
-  document.getElementById("answerCard").addEventListener("click", function () {
-    if (!getMyName()) openNameModal();
-  });
-
-  if (!getMyName()) openNameModal();
+  init();
 })();
 </script>
 </body>
