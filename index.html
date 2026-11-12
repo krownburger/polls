@@ -44,7 +44,8 @@
   <section class="card">
     <h2>1. Navngiv poll'en</h2>
     <input id="titleInput" type="text" placeholder="F.eks. Fredagsmøde – hvem kommer?">
-    <h2 style="margin-top:16px;">Tekst i navn-popup på svar-siden</h2>
+    <h2 style="margin-top:16px;">Hvordan skal deltagerne registrere sig?</h2>
+    <p class="empty">Teksten vises i popup'en på svar-siden, hvor deltagerne skriver deres navn. Lad feltet være tomt for standardteksten "Skriv dit navn".</p>
     <input id="namePromptInput" type="text" placeholder="F.eks. Skriv dit barns navn">
   </section>
 
@@ -81,7 +82,7 @@
   var STORAGE_KEY = "pollOpretter_v1";
   var POLLID_KEY = "pollOpretterPollId_v1";
 
-  var state = { title: "", namePrompt: "Skriv dit barns navn", columns: [] };
+  var state = { title: "", namePrompt: "", columns: [] };
   var serverMode = location.protocol !== "file:";
 
   function load() {
@@ -238,7 +239,7 @@
     if (!confirm("Nulstil oprettelsessiden? Titel, navn-popup-tekst og kolonner slettes (gemte polls på serveren slettes ikke).")) return;
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem(POLLID_KEY);
-    state = { title: "", namePrompt: "Skriv dit barns navn", columns: [] };
+    state = { title: "", namePrompt: "", columns: [] };
     document.getElementById("linkRow").hidden = true;
     renderAll();
   });
