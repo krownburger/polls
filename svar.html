@@ -14,6 +14,8 @@
   button:hover { background: #e8efff; }
   button.primary { background: #2b5cff; color: #fff; }
   button.primary:hover { background: #1e46cc; }
+  button.secondary { background: #e8efff; color: #2b5cff; }
+  button.secondary:hover { background: #d4e0ff; }
   main { max-width: 860px; margin: 24px auto; padding: 0 16px; display: flex; flex-direction: column; gap: 24px; }
   section.card { background: #fff; border-radius: 10px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
   section.card h2 { margin-top: 0; font-size: 1.1rem; }
@@ -59,7 +61,7 @@
   <section class="card" id="answerCard">
     <h2>Dit svar <span class="who" id="whoAmI"></span></h2>
     <form id="answerForm"></form>
-    <button id="btnSave" class="primary" type="submit" form="answerForm">Gem svar</button>
+    <button id="btnSave" class="primary" type="submit" form="answerForm">Gem / opdater svar</button>
   </section>
 
   <section class="card" id="resultsCard">
@@ -74,6 +76,7 @@
     <p class="empty">Dit navn vises, så alle kan se hvem der har svaret.</p>
     <input id="nameInput" type="text" placeholder="F.eks. Anders Andersen" autocomplete="name">
     <div class="modal-actions">
+      <button id="btnSkipName" class="secondary" type="button">Se kun resultater</button>
       <button id="btnNameOk" class="primary">Fortsæt</button>
     </div>
   </div>
@@ -363,10 +366,11 @@
         return;
       }
       try {
+        var hadBefore = !!myResponse();
         await store.submit(name, answers);
         renderForm();
         renderResults();
-        alert("Dit svar er gemt, " + name + "!");
+        alert(hadBefore ? "Dit svar er opdateret, " + name + "!" : "Dit svar er gemt, " + name + "!");
       } catch (err) {
         alert("Kunne ikke gemme svaret – prøv igen.");
       }
@@ -382,6 +386,10 @@
     });
 
     document.getElementById("btnNameOk").addEventListener("click", submitName);
+    document.getElementById("btnSkipName").addEventListener("click", function () {
+      document.getElementById("nameModal").classList.remove("open");
+      document.getElementById("resultsCard").scrollIntoView({ behavior: "smooth" });
+    });
     document.getElementById("nameInput").addEventListener("keydown", function (e) {
       if (e.key === "Enter") { e.preventDefault(); submitName(); }
     });
