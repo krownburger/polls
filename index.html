@@ -66,6 +66,7 @@
     <h2>3. Gem poll'en og få det delbare link</h2>
     <p class="empty" id="modeNote"></p>
     <button id="btnGen">Gem poll og generer link</button>
+    <button id="btnReset" class="danger" style="margin-left:8px;">Nulstil – start forfra</button>
     <div class="link-row" id="linkRow" hidden>
       <input id="linkInput" type="text" readonly>
       <button id="btnCopy" class="secondary">Kopier link</button>
@@ -231,6 +232,15 @@
       }
     }
     showLink(new URL("svar.html", location.href).href + "#p=" + encodePoll(poll));
+  });
+
+  document.getElementById("btnReset").addEventListener("click", function () {
+    if (!confirm("Nulstil oprettelsessiden? Titel, navn-popup-tekst og kolonner slettes (gemte polls på serveren slettes ikke).")) return;
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(POLLID_KEY);
+    state = { title: "", namePrompt: "Skriv dit barns navn", columns: [] };
+    document.getElementById("linkRow").hidden = true;
+    renderAll();
   });
 
   document.getElementById("btnCopy").addEventListener("click", function () {
