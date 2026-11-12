@@ -7,6 +7,9 @@ services:
     environment:
       - PORT=3000
       - DATA_FILE=/app/data/data.json
+      # Sæt SITE_PASSWORD i en .env-fil i samme mappe (git-ignoreres) for at låse
+      # oprettelses-/admin-sider og poll-administration med kodeord.
+      - SITE_PASSWORD=${SITE_PASSWORD:-}
     volumes:
       - ./data:/app/data
     restart: unless-stopped

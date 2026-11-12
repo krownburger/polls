@@ -19,3 +19,14 @@ Hvis du åbner `index.html` direkte som fil (uden serveren), virker et statisk f
 1. Sørg for at Docker og Docker Compose er installeret.
 2. Kør `docker compose up -d --build` i denne mappe.
 3. App'en kører på http://localhost:3000 – data (polls og svar) gemmes i `./data/data.json`, så de overlever genstarter af containeren.
+
+## Beskyttelse med kodeord (anbefalet når siden er live)
+
+1. Opret en fil kaldet `.env` i samme mappe som `docker-compose.yml` med f.eks.:
+   ```
+   SITE_PASSWORD=et-langt-hemmeligt-kodeord
+   ```
+   (`.env` er git-ignoreret, så kodeordet bliver ikke committed.)
+2. Kør `docker compose up -d --build` igen.
+
+Så låses `index.html`, `admin.html` og poll-administrationen (opret/slet/liste) bag et login. `svar.html` og svar-endpointet forbliver åbne, så deltagere stadig kan svare uden kodeord. Uden `SITE_PASSWORD` er alt åbent som før.
