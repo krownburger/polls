@@ -329,23 +329,29 @@
     var nej = responses.filter(function (r) {
       return poll.columns.some(function (c) { return c.type === "checkbox" && r.answers[c.id] === "nej"; });
     });
+    var deltagere = responses.filter(function (r) { return nej.indexOf(r) === -1; });
     var html = "";
+    if (!deltagere.length) {
+      html += '<p class="empty">Ingen deltagere endnu.</p>';
+    } else {
+      html += "<table><thead><tr><th>Navn</th>";
+      poll.columns.forEach(function (col) { html += "<th>" + esc(col.name) + "</th>"; });
+      html += "<th>Tidspunkt</th></tr></thead><tbody>";
+      deltagere.forEach(function (r) {
+        html += "<tr><td>" + esc(r.name) + "</td>";
+        poll.columns.forEach(function (col) {
+          html += "<td>" + cellText(col, r.answers[col.id]) + "</td>";
+        });
+        html += "<td>" + esc(new Date(r.time).toLocaleString("da-DK")) + "</td></tr>";
+      });
+      html += "</tbody></table>";
+    }
     if (nej.length) {
-      html += '<div class="nej-box"><h3>✗ Kommer ikke (' + nej.length + ')</h3><ul>';
+      html += '<div class="nej-box" style="margin-top:16px;margin-bottom:0;"><h3>✗ Kommer ikke (' + nej.length + ')</h3><ul>';
       nej.forEach(function (r) { html += "<li>" + esc(r.name) + "</li>"; });
       html += "</ul></div>";
     }
-    html += "<table><thead><tr><th>Navn</th>";
-    poll.columns.forEach(function (col) { html += "<th>" + esc(col.name) + "</th>"; });
-    html += "<th>Tidspunkt</th></tr></thead><tbody>";
-    responses.forEach(function (r) {
-      html += "<tr><td>" + esc(r.name) + "</td>";
-      poll.columns.forEach(function (col) {
-        html += "<td>" + cellText(col, r.answers[col.id]) + "</td>";
-      });
-      html += "<td>" + esc(new Date(r.time).toLocaleString("da-DK")) + "</td></tr>";
-    });
-    box.innerHTML = html + "</tbody></table>";
+    box.innerHTML = html;
   }
 
   function renderRespondents() {
