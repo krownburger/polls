@@ -167,7 +167,13 @@ const server = http.createServer(async (req, res) => {
               const n = parseInt(v, 10);
               answers[col.id] = Number.isInteger(n) && n >= 0 && n <= 20 ? n : null;
             } else if (col.type === "list") {
-              answers[col.id] = col.options.includes(v) ? v : null;
+              if (col.options.includes(v)) {
+                const takenBy = poll.responses.find((r) => r.name !== name && r.answers[col.id] === v);
+                if (takenBy) return sendJson(res, 409, { error: "\"" + v + "\" er allerede taget af " + takenBy.name });
+                answers[col.id] = v;
+              } else {
+                answers[col.id] = null;
+              }
             } else {
               answers[col.id] = typeof v === "string" ? v.slice(0, 2000) : "";
             }
