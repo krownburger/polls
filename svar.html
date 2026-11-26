@@ -372,6 +372,8 @@
           if (!answers[col.id]) missing.push(col.name);
         }
       });
+      var answeredNej = poll.columns.some(function (col) { return col.type === "checkbox" && answers[col.id] === "nej"; });
+      if (answeredNej) missing = [];
       e.target.querySelectorAll(".field.missing").forEach(function (f) { f.classList.remove("missing"); });
       if (missing.length) {
         poll.columns.forEach(function (col) {
