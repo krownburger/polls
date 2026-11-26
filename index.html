@@ -57,8 +57,10 @@
         <option value="checkbox">Ja/Nej (✓ / ✗)</option>
         <option value="text">Fritekst</option>
         <option value="number">Antal (dropdown med tal)</option>
+        <option value="list">Tilmeldingsliste (fast liste)</option>
       </select>
       <button id="btnAddCol">Tilføj kolonne</button>
+      <textarea id="listItems" rows="4" style="display:none;width:100%;margin-top:8px;font-family:inherit;" placeholder="Én ting pr. linje, f.eks.&#10;2 x Brød&#10;3 x Smør&#10;1 x Kage"></textarea>
     </div>
     <ul class="col-list" id="colList"></ul>
   </section>
@@ -121,7 +123,7 @@
     state.columns.forEach(function (col, idx) {
       var li = document.createElement("li");
       var label = document.createElement("span");
-      var typeLabel = col.type === "checkbox" ? "Ja/Nej ✓/✗" : col.type === "number" ? "Antal" : "Fritekst";
+      var typeLabel = col.type === "checkbox" ? "Ja/Nej ✓/✗" : col.type === "number" ? "Antal" : col.type === "list" ? "Liste (" + (col.options ? col.options.length : 0) + ")" : "Fritekst";
       label.innerHTML = esc(col.name) + '<span class="badge">' + typeLabel + "</span>";
       var actions = document.createElement("div");
       actions.className = "col-actions";
@@ -194,11 +196,22 @@
     save();
   });
 
+  document.getElementById("colType").addEventListener("change", function (e) {
+    document.getElementById("listItems").style.display = e.target.value === "list" ? "block" : "none";
+  });
+
   document.getElementById("btnAddCol").addEventListener("click", function () {
     var nameEl = document.getElementById("colName");
     var name = nameEl.value.trim();
     if (!name) { nameEl.focus(); return; }
-    state.columns.push({ id: uid(), name: name, type: document.getElementById("colType").value });
+    var type = document.getElementById("colType").value;
+    var col = { id: uid(), name: name, type: type };
+    if (type === "list") {
+      col.options = document.getElementById("listItems").value.split("\n").map(function (s) { return s.trim(); }).filter(Boolean);
+      if (!col.options.length) { alert("Skriv mindst én ting i listen (én pr. linje)."); return; }
+      document.getElementById("listItems").value = "";
+    }
+    state.columns.push(col);
     nameEl.value = "";
     nameEl.focus();
     save();

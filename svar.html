@@ -237,6 +237,22 @@
           sel.appendChild(opt);
         }
         wrap.appendChild(sel);
+      } else if (col.type === "list") {
+        var sel = document.createElement("select");
+        sel.name = col.id;
+        var ph = document.createElement("option");
+        ph.value = "";
+        ph.textContent = "Vælg...";
+        if (!val) ph.selected = true;
+        sel.appendChild(ph);
+        (col.options || []).forEach(function (opt) {
+          var o = document.createElement("option");
+          o.value = opt;
+          o.textContent = opt;
+          if (val === opt) o.selected = true;
+          sel.appendChild(o);
+        });
+        wrap.appendChild(sel);
       } else {
         var input = document.createElement("textarea");
         input.name = col.id;
@@ -348,6 +364,9 @@
         } else if (col.type === "number") {
           answers[col.id] = el.value === "" ? null : parseInt(el.value, 10);
           if (el.value === "") missing.push(col.name);
+        } else if (col.type === "list") {
+          answers[col.id] = el.value || null;
+          if (!el.value) missing.push(col.name);
         } else {
           answers[col.id] = el.value.trim();
           if (!answers[col.id]) missing.push(col.name);

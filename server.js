@@ -67,7 +67,8 @@ function isValidPoll(p) {
         c &&
         typeof c.id === "string" &&
         typeof c.name === "string" &&
-        (c.type === "checkbox" || c.type === "text" || c.type === "number")
+        (c.type === "checkbox" || c.type === "text" || c.type === "number" ||
+          (c.type === "list" && Array.isArray(c.options) && c.options.every((o) => typeof o === "string")))
     )
   );
 }
@@ -165,6 +166,8 @@ const server = http.createServer(async (req, res) => {
             } else if (col.type === "number") {
               const n = parseInt(v, 10);
               answers[col.id] = Number.isInteger(n) && n >= 0 && n <= 20 ? n : null;
+            } else if (col.type === "list") {
+              answers[col.id] = col.options.includes(v) ? v : null;
             } else {
               answers[col.id] = typeof v === "string" ? v.slice(0, 2000) : "";
             }
