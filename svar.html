@@ -137,8 +137,10 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ name: name, answers: answers })
         });
-        if (!r.ok) throw new Error("save failed");
-        responses = (await r.json()).responses;
+        var j = {};
+        try { j = await r.json(); } catch (e) { /* ignorer */ }
+        if (!r.ok) throw new Error(j.error || "Kunne ikke gemme svaret");
+        responses = j.responses;
       },
       async refresh() {
         var r = await fetch("/api/polls/" + encodeURIComponent(id));
@@ -178,6 +180,40 @@
   function myResponse() {
     var name = getMyName();
     return responses.find(function (r) { return r.name === name; }) || null;
+  }
+
+  function takenListValues(col) {
+    var me = getMyName();
+    var taken = {};
+    responses.forEach(function (r) {
+      if (r.name !== me && r.answers && r.answers[col.id]) taken[r.answers[col.id]] = true;
+    });
+    return taken;
+  }
+
+  function updateListOptions() {
+    var form = document.getElementById("answerForm");
+    poll.columns.forEach(function (col) {
+      if (col.type !== "list") return;
+      var sel = form.elements[col.id];
+      if (!sel) return;
+      var current = sel.value;
+      var taken = takenListValues(col);
+      sel.innerHTML = "";
+      var ph = document.createElement("option");
+      ph.value = "";
+      ph.textContent = "Vælg...";
+      sel.appendChild(ph);
+      (col.options || []).forEach(function (opt) {
+        if (taken[opt] && current !== opt) return;
+        var o = document.createElement("option");
+        o.value = opt;
+        o.textContent = opt;
+        sel.appendChild(o);
+      });
+      sel.value = current;
+      if (sel.value !== current) sel.value = "";
+    });
   }
 
   function renderForm() {
@@ -246,7 +282,9 @@
         ph.textContent = "Vælg...";
         if (!val) ph.selected = true;
         sel.appendChild(ph);
+        var taken = takenListValues(col);
         (col.options || []).forEach(function (opt) {
+          if (taken[opt] && val !== opt) return;
           var o = document.createElement("option");
           o.value = opt;
           o.textContent = opt;
@@ -394,7 +432,7 @@
         renderResults();
         alert(hadBefore ? "Dit svar er opdateret, " + name + "!" : "Dit svar er gemt, " + name + "!");
       } catch (err) {
-        alert("Kunne ikke gemme svaret – prøv igen.");
+        alert(err.message || "Kunne ikke gemme svaret – prøv igen.");
       }
     });
 
@@ -425,6 +463,7 @@
         try {
           await store.refresh();
           renderResults();
+          updateListOptions();
           if (document.getElementById("respondentsModal").classList.contains("open")) renderRespondents();
         } catch (e) { /* ignorer netværksfejl */ }
       }, 5000);
