@@ -33,6 +33,8 @@
   table { border-collapse: collapse; width: 100%; }
   th, td { border: 1px solid #e2e8f0; padding: 8px 10px; text-align: left; font-size: 0.92rem; }
   th { background: #f0f4fa; }
+  .summary { background: #eef6ff; border: 1px solid #c9dcff; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; font-size: 1rem; }
+  .summary b { color: #2b5cff; font-size: 1.1rem; }
   .nej-box { border: 1px solid #ffc9c9; background: #fff5f5; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; }
   .nej-box h3 { margin: 0 0 8px; font-size: 1rem; color: #c02626; }
   .nej-box ul { margin: 0; padding-left: 20px; }
@@ -330,7 +332,16 @@
       return poll.columns.some(function (c) { return c.type === "checkbox" && r.answers[c.id] === "nej"; });
     });
     var deltagere = responses.filter(function (r) { return nej.indexOf(r) === -1; });
-    var html = "";
+    var numCols = poll.columns.filter(function (c) { return c.type === "number"; });
+    var totalPersoner = deltagere.reduce(function (sum, r) {
+      return sum + numCols.reduce(function (s, c) {
+        return s + (typeof r.answers[c.id] === "number" ? r.answers[c.id] : 0);
+      }, 0);
+    }, 0);
+    var html = '<div class="summary">👥 <b>' + deltagere.length + '</b> ' + (deltagere.length === 1 ? "deltager" : "deltagere");
+    if (numCols.length) html += ' &middot; i alt <b>' + totalPersoner + '</b> ' + (totalPersoner === 1 ? "person" : "personer");
+    if (nej.length) html += ' &middot; ✗ <b>' + nej.length + '</b> kommer ikke';
+    html += "</div>";
     if (!deltagere.length) {
       html += '<p class="empty">Ingen deltagere endnu.</p>';
     } else {
