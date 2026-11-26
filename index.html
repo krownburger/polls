@@ -203,7 +203,7 @@
   document.getElementById("btnAddCol").addEventListener("click", function () {
     var nameEl = document.getElementById("colName");
     var name = nameEl.value.trim();
-    if (!name) { nameEl.focus(); return; }
+    if (!name) { alert("Skriv først et navn på kolonnen (f.eks. \"Medbring\")."); nameEl.focus(); return; }
     var type = document.getElementById("colType").value;
     var col = { id: uid(), name: name, type: type };
     if (type === "list") {
